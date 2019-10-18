@@ -1,0 +1,24 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf100
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset134 PingFangSC-Regular;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Goals:\
+1
+\f1 \'a1\'a2
+\f0 Model the relationships between \'93minref\'94 & \'93maxtrans\'94 with a&b&tBCB&r_MDA, using neural network;\
+2
+\f1 \'a1\'a2Use the model to predict the grid values(multiple combinations of 4 predictors) and find the subset corresponding to 5 lowest \'a1\'b0minref\'a1\'b1 and 5 highest \'a1\'b0maxtrans\'a1\'b1 in each training, compare the robustness of each model;\
+3\'a1\'a2Generate contour plots corresponding to specific values;\
+4\'a1\'a2Model the relationship between #nodes & #layer(s) with RMSE for K folds and variations;\
+\
+Strategies:\
+1\'a1\'a2Data visualization;\
+2\'a1\'a2Set up 11 types of hidden layers;\
+3\'a1\'a2Randomly shuffle the data and generate 10 folds to apply cross validation for each neural network structure and save every results. Select at most 6 types of hidden layer structures where the results of RMSE and variation are both ranked in the 6 lowest values. Use these type of structures to repeat training each with 10 times and save the models;\
+4\'a1\'a2Use saved models to predict the grid; For each prediction, find the subset corresponding to 5 lowest \'a1\'b0minref\'a1\'b1 and 5 highest \'a1\'b0maxtrans\'a1\'b1, compare the consistency and robustness;\
+5\'a1\'a2Generate the contour plot for specific combinations of predictors;\
+6\'a1\'a2Shuffle the 10 folds sample 10 times, each sample apply the previous methods; Get 1100 cv.errors, thus 110 RMSE & variations. Study the relationship between #layers\'a1\'a2#Nodes\'a1\'a2#RMSE\'a1\'a2#Variation;\
+}
