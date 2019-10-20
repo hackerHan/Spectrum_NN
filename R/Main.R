@@ -111,14 +111,48 @@ nn.res<-foreach(i=1:length(nn.model),.combine="rbind") %dopar%
     nn.model[[i]][[j]]$result.matrix[1,]
   }
 }
-# error mean and variance
-# contain nonconverged situation
+
+# error mean & variance & nonconvergence rate
+# include nonconverged situation
 error_mean <- apply(nn.res,1,mean)
 error_var <- apply(nn.res,1,var)
-# visualize error mean and variance
+nonconv_rate <- apply(nn.res,1,function(x) mean(x>1))
+# visualize error mean & variance & nonconvergence_rate
 ggplot(data = cv.table1,aes(x = layers, y = nodes))+
-  geom_point(aes(colour = error_var,alpha = error_mean))+
-  scale_color_gradient(low = "green",high= "red")
+  geom_point(aes(color = error_mean, size = error_var))+
+  scale_color_gradient(low = "green",high= "red",limits = c(0,3))+
+  xlim(0,6)+
+  ylim(1,6)+
+  geom_text(aes(label = paste('mean=',round(error_mean,6),sep = ""),
+                x = layers,y = nodes),vjust = 2.0 )+
+  geom_text(aes(label = paste('variance=',round(error_var,6),sep = ""),
+                x = layers,y = nodes),vjust = 4.0 )+
+  geom_text(aes(label = paste('nonconvergence rate = ',nonconv_rate,sep = ""),
+                x = layers ,y = nodes),vjust = 6.0)+
+  ggtitle("Mean & Variance & nonconvergence rate within 10 repetitions")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(color = "error mean")+
+  labs(size = "error variance")
+
+# exclude nonconvergence situation
+conv_error_mean <- apply(nn.res,1,function(x) mean(x[which(x<1)])) # error mean in converged situation
+conv_error_var <- apply(nn.res,1,function(x) var(x[which(x<1)]))
+conv_size <- apply(nn.res,1,function(x) sum(x<1))
+ggplot(data = cv.table1,aes(x = layers, y = nodes))+
+  geom_point(aes(color = conv_error_mean, size = conv_error_var))+
+  scale_color_gradient(low = "green",high= "red",limits = c(0.35,0.65))+
+  xlim(0,6)+
+  ylim(1,6)+
+  geom_text(aes(label = paste('mean=',round(conv_error_mean,6),sep = ""),
+                x = layers,y = nodes),vjust = 2.0 )+
+  geom_text(aes(label = paste('variance=',round(conv_error_var,6),sep = ""),
+                x = layers,y = nodes),vjust = 4.0 )+
+  geom_text(aes(label = paste('converged sample size = ',conv_size,sep = ""),
+                x = layers ,y = nodes),vjust = 6.0)+
+  ggtitle("Mean & Variance & Efficient sample size of converged samples among 10 repetitions ")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(color = "error mean")+
+  labs(size = "error variance")
 
 
 #Grid prediction part
@@ -175,221 +209,8 @@ grid.comb<-foreach(i=1:length(grid.pred),.combine="rbind") %dopar%
 }
 # write.csv(grid.comb,"grid_comb.csv")
 
-# contour plot part
-# set up specific combinations to generate contour plot
-a.val<-b.val<-c(0,0.045,0.09)
-t.val<-c(0.26,0.30,0.34,0.38,0.42)
-r.val<-c(unique(grid$r_MDA)[12],unique(grid$r_MDA)[18],unique(grid$r_MDA)[21])
-#contour plot of minref with fixed a and b
-system.time({minref.abfixed<-foreach(i=1:length(grid.pred)) %dopar%
-{
-  foreach(j=1:length(grid.pred[[i]])) %dopar%
-  {
-    foreach(k=1:length(a.val)) %dopar%
-    {
-      foreach(t=1:length(b.val),.packages="plotly") %dopar%
-      {
-        minref.abfixed<-grid.pred[[i]][[j]] %>%
-          filter(a==a.val[k]&b==b.val[t])
-        plot_ly(data=minref.abfixed,type="contour",
-                   x=~tBCB,y=~r_MDA,z=~minref,colors=c("green","red"),
-                   contours=list(showlabels=TRUE),
-                   hoverinfo="all",name="minref") %>%
-          colorbar(title="minref") %>%
-          layout(title=paste("a=",a.val[k],",","b=",b.val[t],sep=""))
-      }
-    }
-  }
-}
-})
-
-#contour plot of maxtrans with fixed a and b
-system.time({maxtra.abfixed<-foreach(i=1:length(grid.pred),.packages="doParallel") %dopar%
-{
-  foreach(j=1:length(grid.pred[[i]])) %dopar%
-  {
-    foreach(k=1:length(a.val)) %dopar%
-    {
-      foreach(t=1:length(b.val),.packages="plotly") %dopar%
-      {
-        maxtra.abfixed<-grid.pred[[i]][[j]] %>%
-          filter(a==a.val[k]&b==b.val[t])
-        plot_ly(data=maxtra.abfixed,type="contour",
-                x=~tBCB,y=~r_MDA,z=~maxtrans,colors=c("red","green"),
-                contours=list(showlabels=TRUE),
-                hoverinfo="all",name="maxtrans") %>%
-          colorbar(title="maxtrans") %>%
-          layout(title=paste("a=",a.val[k],",","b=",b.val[t],sep=""))
-      }
-    }
-  }
-}
-})
-
-#contour plot of minref with fixed tBCB and r_MDA
-system.time({minref.trfixed<-foreach(i=1:length(grid.pred)) %dopar%
-{
-  foreach(j=1:length(grid.pred[[i]])) %dopar%
-  {
-    foreach(k=1:length(t.val)) %dopar%
-    {
-      foreach(t=1:length(r.val),.packages="plotly") %dopar%
-      {
-        minref.trfixed<-grid.pred[[i]][[j]] %>%
-          filter(tBCB==t.val[k]&r_MDA==r.val[t])
-        plot_ly(data=minref.trfixed,type="contour",
-                x=~a,y=~b,z=~minref,colors=c("green","red"),
-                contours=list(showlabels=TRUE),
-                hoverinfo="all",name="minref") %>%
-          colorbar(title="minref") %>%
-          layout(title=paste("tBCB=",t.val[k],",","r_MDA=",r.val[t],sep=""))
-      }
-    }
-  }
-}
-})
-
-#contour plot of maxtrans with fixed tBCB and r_MDA
-system.time({maxtra.trfixed<-foreach(i=1:length(grid.pred),.packages="doParallel") %dopar%
-{
-  foreach(j=1:length(grid.pred[[i]])) %dopar%
-  {
-    foreach(k=1:length(t.val)) %dopar%
-    {
-      foreach(t=1:length(r.val),.packages="plotly") %dopar%
-      {
-        maxtra.trfixed<-grid.pred[[i]][[j]] %>%
-          filter(tBCB==t.val[k]&r_MDA==r.val[t])
-        plot_ly(data=maxtra.trfixed,type="contour",
-                x=~a,y=~b,z=~maxtrans,colors=c("red","green"),
-                contours=list(showlabels=TRUE),
-                hoverinfo="all",name="maxtrans") %>%
-          colorbar(title="maxtrans") %>%
-          layout(title=paste("tBCB=",t.val[k],",","r_MDA=",r.val[t],sep=""))
-      }
-    }
-  }
-}
-})
-
-# Add Frequency as input
-# Choose 6 * 3 structure as NN model
-data3.minref<-select(data3,a:freq1)%>%
-  mutate(norm.freq1 = (freq1-mean(freq1))/sqrt(var(freq1)))
-data3.maxtra<-select(data3,a:r_MDA,maxtrans:freq2) %>%
-  mutate(norm.freq2 = (freq2-mean(freq2))/sqrt(var(freq2)))
 
 
-# nn_1<-neuralnet(minref~a+b+tBCB+r_MDA+norm.freq1,data=data3.minref,
-#               hidden=rep(6,3),stepmax=1e+05,
-#                algorithm="rprop+",err.fct="sse",
-#                act.fct="logistic",linear.output=FALSE)
-# saveRDS(nn_1,"nn_1.rds")
-nn_1<-readRDS("nn_1.rds")
-# nn_2<-neuralnet(maxtrans~a+b+tBCB+r_MDA+norm.freq2,data=data3.maxtra,
-#               hidden=rep(6,3),stepmax=1e+05,
-#                algorithm="rprop+",err.fct="sse",
-#                act.fct="logistic",linear.output=FALSE)
-# saveRDS(nn_2,"nn_2.rds")
-nn_2<-readRDS("nn_2.rds")
-# grid prediction
-grid.freq <- expand.grid(a=round(seq(0.0,0.9,0.045),3),b=round(seq(0,0.9,0.045),3),
-                         tBCB=round(seq(0.1,0.9,0.04),3),r_MDA=seq(0.61111,0.77778,0.0083335),
-                    freq = seq(47.0,47.8,0.2))%>%
-  mutate(norm.freq = (freq-mean(freq))/sqrt(var(freq)),
-         pred.minref=neuralnet::compute(nn_1,cbind(a,b,tBCB,r_MDA,norm.freq))$net.result[,1],
-         pred.maxtra=neuralnet::compute(nn_2,cbind(a,b,tBCB,r_MDA,norm.freq))$net.result[,1])
-
-
-
-# contour plot ShinyApp
-library(shiny)
-library(shinythemes)
-shinyApp(
-  
-  ui = fluidPage(
-    theme = shinytheme("spacelab"),
-    # Feature selection
-    fixedRow(
-      # Input: a
-      column(4,sliderInput(inputId = "featureInput1", label = "a",min = 0, max = 0.9,
-                           step = 0.09, value = 0)),
-      # Input: b
-      column(4,sliderInput(inputId = "featureInput2", label = "b",min = 0, max = 0.9,
-                           step = 0.09, value = 0)),
-      # Input: frequency
-      column(4,sliderInput(inputId = "featureInput3", label = "frequency",min = 47,
-                           max = 47.8, step = 0.2, value = 47))),
-    # First row
-    fixedRow(
-      column(6, plotlyOutput("Plot1",height = "600px")),
-      column(6, plotlyOutput("Plot2",height = "600px"))),
-    
-    # Feature selection
-    fixedRow(
-      # Input: tBCB
-      column(4,sliderInput(inputId = "featureInput4", label = "tBCB",min = 0.1, max = 0.9,
-                           step = 0.08, value = 0.5)),
-      # Input: r_MDA
-      column(4,sliderInput(inputId = "featureInput5", label = "r_MDA",min = 0.61111, max = 0.77778,
-                           step = 0.016667, value = 0.77778)),
-      # Input: frequency
-      column(4,sliderInput(inputId = "featureInput6", label = "frequency",min = 47,
-                           max = 47.8, step = 0.2, value = 47))
-    ),
-    # Second row
-    fixedRow(
-      column(6, plotlyOutput("Plot3",height = "600px")),
-      column(6, plotlyOutput("Plot4",height = "600px"))
-    )
-  ),
-  
-  server = function(input, output) {
-    grid.abfixed <- reactive({
-      filter(grid.freq,round(a,2) == input$featureInput1 &
-               round(b,2) == input$featureInput2 &
-               round(freq,2) == input$featureInput3)
-    })
-    grid.trfixed <- reactive({
-      filter(grid.freq,round(tBCB,2) == input$featureInput4 &
-              round(r_MDA,6) == input$featureInput5 &
-               round(freq,2) == input$featureInput6)
-    })
-    
-    output$Plot1 <- renderPlotly({plot_ly(data=grid.abfixed(),type="contour",
-                            x=~tBCB,y=~r_MDA,z=~pred.minref,colors=c("red","green"),
-                            contours=list(showlabels=TRUE),
-                            hoverinfo="all",name="minref") %>%
-        colorbar(title="minref")
-    
-  })
-    output$Plot2 <- renderPlotly({plot_ly(data=grid.abfixed(),type="contour",
-                                          x=~tBCB,y=~r_MDA,z=~pred.maxtra,
-                                          colors=c("green","red"),
-                                          contours=list(showlabels=TRUE),
-                                          hoverinfo="all",name="maxtrans") %>%
-        colorbar(title="maxtrans")
-      
-    })
-    output$Plot3 <- renderPlotly({plot_ly(data=grid.trfixed(),type="contour",
-                                          x=~a,y=~b,z=~pred.minref,colors=c("red","green"),
-                                          contours=list(showlabels=TRUE),
-                                          hoverinfo="all",name="minref") %>%
-        colorbar(title="minref")
-      
-    })
-    output$Plot4 <- renderPlotly({plot_ly(data=grid.trfixed(),type="contour",
-                                          x=~a,y=~b,z=~pred.maxtra,colors=c("green","red"),
-                                          contours=list(showlabels=TRUE),
-                                          hoverinfo="all",name="maxtrans") %>%
-        colorbar(title="maxtrans")
-      
-    })
-    
-    
-},
-  options = list(height = 500)
-)
 
 
 
