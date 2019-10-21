@@ -111,6 +111,7 @@ nn.res<-foreach(i=1:length(nn.model),.combine="rbind") %dopar%
     nn.model[[i]][[j]]$result.matrix[1,]
   }
 }
+# write.csv(nn.res,"nn_res.csv")
 
 # error mean & variance & nonconvergence rate
 # include nonconverged situation
@@ -208,6 +209,8 @@ grid.comb<-foreach(i=1:length(grid.pred),.combine="rbind") %dopar%
   }
 }
 # write.csv(grid.comb,"grid_comb.csv")
+
+stopCluster(cl) # stop parallel computing
 
 
 
