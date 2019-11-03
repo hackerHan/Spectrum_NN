@@ -1,4 +1,5 @@
 #x is hidden layer type; k is k folds;
+#hidden layer type is repeated notes with multiple layers
 cv.err<-function(x,data=data3,k=10,seed.val=1)
 {
   MSE<-ave.RMSE<-va.MSE<-NULL
@@ -50,7 +51,6 @@ model.rep<-function(x,data=data3,rep=10,seed.val=1)
   }
   return(nn.model)
 }
-
 
 
 
