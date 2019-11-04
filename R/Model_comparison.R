@@ -36,5 +36,38 @@ for(i in 1:length(hid_struc))
   }
 }
 
+# error matrix
+error_mat<-rep(list(matrix(NA,nrow = N_rep,ncol = N_folds)),length(hid_struc))
+step_mat <-rep(list(matrix(NA,nrow = N_rep,ncol = N_folds)),length(hid_struc))
 
+for(i in 1:length(hid_struc))
+{
+  for(j in 1:N_rep)
+  {
+    for(k in 1:N_folds)
+    {
+      tryCatch({
+        test_idx<-which(folds==k,arr.ind=TRUE) # validation set index
+        testData<-data.random[test_idx,] # validation set
+        test_pred <-neuralnet::compute(comp_model[[i]][[j]][[k]],testData[1:4])
+        error_mat[[i]][j,k]<-(1/nrow(testData))*(sum((testData[,5]-test_pred$net.result[,1])^2)+
+                                                   sum((testData[,8]-test_pred$net.result[,2])^2))
+        step_mat[[i]][j,k]<-comp_model[[i]][[j]][[k]]$result.matrix[3,] # convergence step
+      },error=function(e){})
+    }
+  }
+}
+
+# data preprocessing
+for(i in 1:length(hid_struc))
+{
+  for(j in 1:N_rep)
+  {
+    for(k in 1:N_folds)
+    {
+      error_mat[[i]][j,k] <- ifelse(comp_model[[i]][[j]][[k]]$result.matrix[1,]>1 |
+                                           is.na(error_mat[[i]][j,k]),Inf,error_mat[[i]][j,k])
+    }
+  }
+}
 
