@@ -65,8 +65,12 @@ for(i in 1:length(hid_struc))
   {
     for(k in 1:N_folds)
     {
-      error_mat[[i]][j,k] <- ifelse(comp_model[[i]][[j]][[k]]$result.matrix[1,]>1 |
-                                           is.na(error_mat[[i]][j,k]),Inf,error_mat[[i]][j,k])
+      tryCatch({
+        error_mat[[i]][j,k]<-ifelse(comp_model[[i]][[j]][[k]]$result.matrix[1,]>1,0,error_mat[[i]][j,k])
+        step_mat[[i]][j,k]<-ifelse(comp_model[[i]][[j]][[k]]$result.matrix[1,]>1,0,step_mat[[i]][j,k])
+      },error=function(e){})
+      error_mat[[i]][j,k]<-ifelse(is.na(error_mat[[i]][j,k]),0,error_mat[[i]][j,k])
+      step_mat[[i]][j,k]<-ifelse(is.na(step_mat[[i]][j,k]),0,step_mat[[i]][j,k])
     }
   }
 }
