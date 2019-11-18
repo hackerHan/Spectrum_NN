@@ -20,7 +20,7 @@ nn_1<-readRDS("nn_1.rds")
 nn_2<-readRDS("nn_2.rds")
 # grid prediction
 grid.freq <- expand.grid(a=round(seq(0.0,0.9,0.045),3),b=round(seq(0,0.9,0.045),3),
-                         tBCB=round(seq(0.1,0.9,0.04),3),r_MDA=seq(0.61111,0.77778,0.0083335),
+                         tBCB=round(seq(0.1,0.9,0.04),3),r_MDA=round(seq(0.61111,0.77778,0.0083335),7),
                          freq = seq(47.0,47.8,0.2))%>%
   mutate(norm.freq = (freq-mean(freq))/sqrt(var(freq)),
          pred.minref=neuralnet::compute(nn_1,cbind(a,b,tBCB,r_MDA,norm.freq))$net.result[,1],
@@ -78,7 +78,7 @@ shinyApp(
     })
     grid.trfixed <- reactive({
       filter(grid.freq,round(tBCB,3) == input$featureInput4 &
-               round(r_MDA,6) == input$featureInput5 &
+               round(r_MDA,7) == round(input$featureInput5,7) &
                round(freq,2) == input$featureInput6)
     })
     
