@@ -7,7 +7,6 @@ hid_struc <- list(c(2,3,4),c(4,3,2),c(3,4,5),c(5,4,3),c(3,3,3),c(4,4,4),c(5,5,5)
 
 # Shuffle the data
 data.random <- data3[sample(nrow(data3)),]
-# Write.csv(data.random,"rd_data.csv")
 
 # Create 10 folds
 N_folds = 10 # number of folds
